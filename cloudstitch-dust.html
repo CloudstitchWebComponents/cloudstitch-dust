@@ -92,21 +92,24 @@ Example:
         this.$.box.exports.beforeRender(this.$.template, data);
       }
 
-      // Render and fill the template
-      try { 
-        var rendered = ejs.render(this.$.box.template, data, this.options);
-        Polymer.dom(this.$.template).innerHTML = rendered;        
-      } catch(e) {
-        console.log(e);
-      }
-
-      // Also render the content element
-      try {
-        var rendered2 = ejs.render(this.$.inlined.innerText, data, this.options);
-        Polymer.dom(this.$.inlined).innerHTML = rendered2;
-      } catch(e) {
-        console.log(e);
-      }
+      var compiledDust = dust.compile(this.$.box.template, 'boxTemplate');
+      dust.loadSource(compiledDust);
+      var compiledInline = dust.compile(this.$.inlined.innerText, 'inlineTemplate');
+      dust.loadSource(compiledInline);
+      var self = this;
+    
+      dust.render('boxTemplate', data, function(err, out) {
+        if (err) {
+          console.log('render error', err);
+        }
+        Polymer.dom(self.$.template).innerHTML = out;        
+        dust.render('inlineTemplate', data, function(err2, out2) {
+          if (err2) {
+            console.log('render error', err2);
+          }
+          Polymer.dom(self.$.inlined).innerHTML = out2;        
+        });
+      });
 
       // Run the post hook
       if (this.$.box.exports && this.$.box.exports.afterRender && (typeof this.$.box.exports.afterRender == 'function')) {
